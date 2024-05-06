@@ -11,9 +11,8 @@ func TestListAssets(t *testing.T) {
 	mockServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Validate the request
 		expectedPath := "/fleets/fleetID/assets"
-		expectedQuery := "features.gps,features.mileage,features.speed,features.trip,features.uic"
-		if r.URL.Path != expectedPath || r.URL.RawQuery != expectedQuery {
-			t.Errorf("Expected request path %s with query %s, got %s with query %s", expectedPath, expectedQuery, r.URL.Path, r.URL.RawQuery)
+		if r.URL.Path != expectedPath {
+			t.Errorf("Expected request path %s, got %s", expectedPath, r.URL.Path)
 		}
 		// Respond with mock data
 		_, _ = w.Write([]byte(`{"data":[{"id":"asset1","features":{"gps":{"timestamp":123456789,"value":{"latitude":12.34,"longitude":56.78}},"mileage":{"timestamp":123456789,"value":100},"speed":{"timestamp":123456789,"value":50},"trip":{"timestamp":123456789,"value":{"tripId":"trip1"}},"uic":{"value":"uic1"}}}]}`))
@@ -41,9 +40,8 @@ func TestGetAsset(t *testing.T) {
 	mockServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Validate the request
 		expectedPath := "/fleets/fleetID/assets/assetID"
-		expectedQuery := "features.gps,features.mileage,features.speed,features.trip,features.uic"
-		if r.URL.Path != expectedPath || r.URL.RawQuery != expectedQuery {
-			t.Errorf("Expected request path %s with query %s, got %s with query %s", expectedPath, expectedQuery, r.URL.Path, r.URL.RawQuery)
+		if r.URL.Path != expectedPath {
+			t.Errorf("Expected request path %s, got %s", expectedPath, r.URL.Path)
 		}
 		// Respond with mock data
 		_, _ = w.Write([]byte(`{"data":{"id":"asset1","features":{"gps":{"timestamp":123456789,"value":{"latitude":12.34,"longitude":56.78}},"mileage":{"timestamp":123456789,"value":100},"speed":{"timestamp":123456789,"value":50},"trip":{"timestamp":123456789,"value":{"tripId":"trip1"}},"uic":{"value":"uic1"}}}}`))

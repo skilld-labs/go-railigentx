@@ -24,11 +24,22 @@ type Asset struct {
 }
 
 type Features struct {
-	UIC     *UIC     `json:"uic"`
-	GPS     *GPS     `json:"gps"`
-	Mileage *Mileage `json:"Mileage"`
-	Speed   *Speed   `json:"speed"`
-	Trip    *Trip    `json:"trip"`
+	UIC                   *UIC                   `json:"uic"`
+	GPS                   *GPS                   `json:"gps"`
+	Mileage               *Mileage               `json:"Mileage"`
+	Speed                 *Speed                 `json:"speed"`
+	Trip                  *Trip                  `json:"trip"`
+	LineVoltage           *LineVoltage           `json:"line_voltage"`
+	LineCurrent           *LineCurrent           `json:"line_current"`
+	TractiveEffort        *TractiveEffort        `json:"tractive_effort"`
+	BrakeEffort           *BrakeEffort           `json:"brake_effort"`
+	NumberOfLocos         *NumberOfLocos         `json:"number_of_locos"`
+	DieselTankLiquidLevel *DieselTankLiquidLevel `json:"diesel_tank_liquid_level"`
+	PantographsInfos      *PantographsInfos      `json:"pantograph"`
+	CabsInfos             *CabsInfos             `json:"cab"`
+	WheelsInfos           *WheelsInfos           `json:"wheel"`
+	TrainLength           *TrainLength           `json:"train_length"`
+	TrainWeight           *TrainWeight           `json:"train_weight"`
 }
 
 type UIC struct {
@@ -56,14 +67,117 @@ type Speed struct {
 }
 
 type Trip struct {
+	Timestamp int64     `json:"timestamp"`
+	Data      *TripData `json:"value"`
+}
+
+type TripData struct {
+	TripID string `json:"tripId"`
+}
+
+type LineVoltage struct {
+	Timestamp int64   `json:"timestamp"`
+	Value     float64 `json:"value"`
+}
+
+type LineCurrent struct {
+	Timestamp int64   `json:"timestamp"`
+	Value     float64 `json:"value"`
+}
+
+type TractiveEffort struct {
+	Timestamp int64   `json:"timestamp"`
+	Value     float64 `json:"value"`
+}
+
+type BrakeEffort struct {
+	Timestamp int64   `json:"timestamp"`
+	Value     float64 `json:"value"`
+}
+
+type NumberOfLocos struct {
 	Timestamp int64 `json:"timestamp"`
-	Value     struct {
-		TripID string `json:"tripId"`
-	} `json:"value"`
+	Value     int   `json:"value"`
+}
+
+type DieselTankLiquidLevel struct {
+	Timestamp int64   `json:"timestamp"`
+	Value     float64 `json:"value"`
+}
+
+type PantographsInfos struct {
+	Timestamp int64            `json:"timestamp"`
+	Data      *PantographsData `json:"value"`
+}
+
+type PantographsData struct {
+	Pantographs []PantographInfos `json:"pantographs"`
+}
+
+type PantographInfos struct {
+	ID   string          `json:"id"`
+	Data *PantographData `json:"value"`
+}
+
+type PantographData struct {
+	State *PantographState `json:"state"`
+}
+
+type PantographState struct {
+	Timestamp int64  `json:"timestamp"`
+	Value     string `json:"value"`
+}
+
+type CabsInfos struct {
+	Timestamp int64      `json:"timestamp"`
+	Cabs      []CabInfos `json:"value"`
+}
+
+type CabInfos struct {
+	ID   string   `json:"id"`
+	Data *CabData `json:"value"`
+}
+
+type CabData struct {
+	Occupied *CabOccupied `json:"occupied"`
+}
+
+type CabOccupied struct {
+	Timestamp int64  `json:"timestamp"`
+	Value     string `json:"value"`
+}
+
+type WheelsInfos struct {
+	Timestamp int64        `json:"timestamp"`
+	Wheels    []WheelInfos `json:"value"`
+}
+
+type WheelInfos struct {
+	ID   string `json:"id"`
+	Data *WheelData
+}
+
+type WheelData struct {
+	Speed *WheelSpeed `json:"speed"`
+}
+
+type WheelSpeed struct {
+	Timestamp int64   `json:"timestamp"`
+	Value     float64 `json:"value"`
+}
+
+type TrainLength struct {
+	Timestamp int64   `json:"timestamp"`
+	Value     float64 `json:"value"`
+}
+
+type TrainWeight struct {
+	Timestamp int64   `json:"timestamp"`
+	Value     float64 `json:"value"`
 }
 
 func (c *Client) ListAssets(fleetId string) (*AssetCollectionResponse, error) {
-	req, err := http.NewRequest("GET", fmt.Sprintf("%s/fleets/%s/assets?features.gps,features.mileage,features.speed,features.trip,features.uic", c.BaseURL, fleetId), nil)
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s/fleets/%s/assets", c.BaseURL, fleetId), nil)
 	if err != nil {
 		return nil, fmt.Errorf("error creating request for ListAssets: %w", err)
 	}
@@ -96,7 +210,7 @@ func (c *Client) ListAssets(fleetId string) (*AssetCollectionResponse, error) {
 
 // GetAsset retrieves information for a specific asset of a specific fleet.
 func (c *Client) GetAsset(fleetId string, assetId string) (*AssetResponse, error) {
-	req, err := http.NewRequest("GET", fmt.Sprintf("%s/fleets/%s/assets/%s?features.gps,features.mileage,features.speed,features.trip,features.uic", c.BaseURL, fleetId, assetId), nil)
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s/fleets/%s/assets/%s", c.BaseURL, fleetId, assetId), nil)
 	if err != nil {
 		return nil, fmt.Errorf("error creating request for GetAsset: %w", err)
 	}
