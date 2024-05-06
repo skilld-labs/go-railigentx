@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strings"
 )
 
 // AssetCollectionResponse represents the response structure for listing assets in a fleet
@@ -176,10 +177,127 @@ type TrainWeight struct {
 	Value     float64 `json:"value"`
 }
 
-func (c *Client) ListAssets(fleetId string) (*AssetCollectionResponse, error) {
+// Fields represents the selectable fields in the query
+type Fields struct {
+	GPS                   bool
+	Mileage               bool
+	Speed                 bool
+	TripFeatures          bool
+	UIC                   bool
+	TrainMode             bool
+	LineVoltage           bool
+	LineCurrent           bool
+	TractiveEffort        bool
+	BrakeEffort           bool
+	NumberOfLocos         bool
+	DieselRunning         bool
+	DieselTankLiquidLevel bool
+	PantographStatus      bool
+	WheelFeatures         bool
+	Ccu1SwVersion         bool
+	Ccu2SwVersion         bool
+	RdSwVersion           bool
+	TrainLength           bool
+	TrainWeight           bool
+	TrainShutdown         bool
+}
+
+// BuildQuery returns a string that represents the query based on the fields set to true
+func (f Fields) BuildQueryParam() string {
+	elements := []string{}
+
+	if f.GPS {
+		elements = append(elements, "features.gps")
+	}
+	if f.Mileage {
+		elements = append(elements, "features.mileage")
+	}
+	if f.Speed {
+		elements = append(elements, "features.speed")
+	}
+	if f.TripFeatures {
+		elements = append(elements, "features.trip_features")
+	}
+	if f.UIC {
+		elements = append(elements, "features.uic")
+	}
+	if f.TrainMode {
+		elements = append(elements, "features.train_mode")
+	}
+	if f.LineVoltage {
+		elements = append(elements, "features.line_voltage")
+	}
+	if f.LineCurrent {
+		elements = append(elements, "features.line_current")
+	}
+	if f.TractiveEffort {
+		elements = append(elements, "features.tractive_effort")
+	}
+	if f.BrakeEffort {
+		elements = append(elements, "features.brake_effort")
+	}
+	if f.NumberOfLocos {
+		elements = append(elements, "features.number_of_locos")
+	}
+	if f.DieselRunning {
+		elements = append(elements, "features.diesel_running")
+	}
+	if f.DieselTankLiquidLevel {
+		elements = append(elements, "features.diesel_tank_liquid_level")
+	}
+	if f.PantographStatus {
+		elements = append(elements, "features.pantograph")
+	}
+	if f.WheelFeatures {
+		elements = append(elements, "features.wheel")
+	}
+	if f.Ccu1SwVersion {
+		elements = append(elements, "features.ccu1_sw_version")
+	}
+	if f.Ccu2SwVersion {
+		elements = append(elements, "features.ccu2_sw_version")
+	}
+	if f.RdSwVersion {
+		elements = append(elements, "features.rd_sw_version")
+	}
+	if f.TrainLength {
+		elements = append(elements, "features.train_length")
+	}
+	if f.TrainWeight {
+		elements = append(elements, "features.train_weight")
+	}
+	if f.TrainShutdown {
+		elements = append(elements, "features.train_shutdown")
+	}
+	if len(elements) > 0 {
+		return "fields=" + strings.Join(elements, ",")
+	}
+	return ""
+}
+
+type assetOptions struct {
+	fields *Fields
+}
+
+type AssetOption func(*assetOptions)
+
+func WithFields(f *Fields) AssetOption {
+	return func(opts *assetOptions) {
+		opts.fields = f
+	}
+}
+
+func (c *Client) ListAssets(fleetId string, opt ...AssetOption) (*AssetCollectionResponse, error) {
+	opts := &assetOptions{}
+	for _, o := range opt {
+		o(opts)
+	}
 	req, err := http.NewRequest("GET", fmt.Sprintf("%s/fleets/%s/assets", c.BaseURL, fleetId), nil)
 	if err != nil {
 		return nil, fmt.Errorf("error creating request for ListAssets: %w", err)
+	}
+	if opts.fields != nil {
+		req.URL.RawQuery = opts.fields.BuildQueryParam()
 	}
 
 	req.Header.Add("Authorization", c.AuthHeader)
@@ -209,10 +327,17 @@ func (c *Client) ListAssets(fleetId string) (*AssetCollectionResponse, error) {
 }
 
 // GetAsset retrieves information for a specific asset of a specific fleet.
-func (c *Client) GetAsset(fleetId string, assetId string) (*AssetResponse, error) {
+func (c *Client) GetAsset(fleetId string, assetId string, opt ...AssetOption) (*AssetResponse, error) {
+	opts := &assetOptions{}
+	for _, o := range opt {
+		o(opts)
+	}
 	req, err := http.NewRequest("GET", fmt.Sprintf("%s/fleets/%s/assets/%s", c.BaseURL, fleetId, assetId), nil)
 	if err != nil {
 		return nil, fmt.Errorf("error creating request for GetAsset: %w", err)
+	}
+	if opts.fields != nil {
+		req.URL.RawQuery = opts.fields.BuildQueryParam()
 	}
 
 	req.Header.Add("Authorization", c.AuthHeader)
