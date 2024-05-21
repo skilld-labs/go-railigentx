@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 	"strings"
 )
 
@@ -27,20 +28,21 @@ type Asset struct {
 type Features struct {
 	UIC                   *UIC                   `json:"uic"`
 	GPS                   *GPS                   `json:"gps"`
-	Mileage               *Mileage               `json:"Mileage"`
+	Mileage               *Mileage               `json:"mileage"`
 	Speed                 *Speed                 `json:"speed"`
 	Trip                  *Trip                  `json:"trip"`
-	LineVoltage           *LineVoltage           `json:"line_voltage"`
-	LineCurrent           *LineCurrent           `json:"line_current"`
-	TractiveEffort        *TractiveEffort        `json:"tractive_effort"`
-	BrakeEffort           *BrakeEffort           `json:"brake_effort"`
-	NumberOfLocos         *NumberOfLocos         `json:"number_of_locos"`
-	DieselTankLiquidLevel *DieselTankLiquidLevel `json:"diesel_tank_liquid_level"`
+	LineVoltage           *LineVoltage           `json:"lineVoltage"`
+	LineCurrent           *LineCurrent           `json:"lineCurrent"`
+	TractiveEffort        *TractiveEffort        `json:"tractiveEffort"`
+	BrakeEffort           *BrakeEffort           `json:"brakeEffort"`
+	NumberOfLocos         *NumberOfLocos         `json:"numberOfLocos"`
+	DieselTankLiquidLevel *DieselTankLiquidLevel `json:"dieselTankLiquidLevel"`
 	PantographsInfos      *PantographsInfos      `json:"pantograph"`
 	CabsInfos             *CabsInfos             `json:"cab"`
 	WheelsInfos           *WheelsInfos           `json:"wheel"`
-	TrainLength           *TrainLength           `json:"train_length"`
-	TrainWeight           *TrainWeight           `json:"train_weight"`
+	TrainLength           *TrainLength           `json:"trainLength"`
+	TrainWeight           *TrainWeight           `json:"trainWeight"`
+	TrainShutdown         *TrainShutdown         `json:"trainShutdown"`
 }
 
 type UIC struct {
@@ -175,6 +177,28 @@ type TrainLength struct {
 type TrainWeight struct {
 	Timestamp int64   `json:"timestamp"`
 	Value     float64 `json:"value"`
+}
+
+type TrainShutdown struct {
+	Timestamp int64 `json:"timestamp"`
+	Value     bool  `json:"value"`
+}
+
+func (ts *TrainShutdown) UnmarshalJSON(data []byte) error {
+	t := struct {
+		Timestamp int64  `json:"timestamp"`
+		Value     string `json:"value"`
+	}{}
+	if err := json.Unmarshal(data, &t); err != nil {
+		return err
+	}
+	value, err := strconv.ParseBool(t.Value)
+	if err != nil {
+		return err
+	}
+	ts.Timestamp = t.Timestamp
+	ts.Value = value
+	return nil
 }
 
 // Fields represents the selectable fields in the query
@@ -317,6 +341,7 @@ func (c *Client) ListAssets(fleetId string, opt ...AssetOption) (*AssetCollectio
 	if err != nil {
 		return nil, fmt.Errorf("error reading response body for ListAssets: %w", err)
 	}
+	fmt.Println(string(body))
 
 	var assetsResponse AssetCollectionResponse
 	if err := json.Unmarshal(body, &assetsResponse); err != nil {
